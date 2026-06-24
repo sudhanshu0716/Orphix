@@ -7,8 +7,8 @@ import { getGitHistory } from './git.js';
 function getApiEndpoint(relativeFile) {
   const clean = relativeFile.replace(/\\/g, '/');
   
-  // 1. Pages Router: pages/api/xyz.js or src/pages/api/xyz.js
-  let match = clean.match(/^(?:src\/)?pages\/api\/(.+)\.[jt]sx?$/);
+  // 1. Pages Router: pages/api/xyz.js or src/pages/api/xyz.js (supporting subfolders)
+  let match = clean.match(/(?:^|\/)pages\/api\/(.+)\.[jt]sx?$/);
   if (match) {
     let endpoint = match[1];
     if (endpoint.endsWith('/index')) {
@@ -17,8 +17,8 @@ function getApiEndpoint(relativeFile) {
     return `/api/${endpoint}`;
   }
   
-  // 2. App Router: app/api/xyz/route.js or src/app/api/xyz/route.js
-  match = clean.match(/^(?:src\/)?app\/api\/(.+)\/route\.[jt]sx?$/);
+  // 2. App Router: app/api/xyz/route.js or src/app/api/xyz/route.js (supporting subfolders)
+  match = clean.match(/(?:^|\/)app\/api\/(.+)\/route\.[jt]sx?$/);
   if (match) {
     return `/api/${match[1]}`;
   }

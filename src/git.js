@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import path from 'path';
 
 /**
@@ -10,12 +10,15 @@ import path from 'path';
 export function getGitHistory(filePath) {
   try {
     const dir = path.dirname(filePath);
-    const cmd = `git log -1 --format="%ar|%an" -- "${filePath}"`;
-    const output = execSync(cmd, {
-      cwd: dir,
-      stdio: ['ignore', 'pipe', 'ignore'],
-      encoding: 'utf-8',
-    }).trim();
+    const output = execFileSync(
+      'git',
+      ['log', '-1', '--format=%ar|%an', '--', filePath],
+      {
+        cwd: dir,
+        stdio: ['ignore', 'pipe', 'ignore'],
+        encoding: 'utf-8',
+      }
+    ).trim();
 
     if (output) {
       const parts = output.split('|');
