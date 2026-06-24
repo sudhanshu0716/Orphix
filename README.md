@@ -1,8 +1,8 @@
 # Orphix 🕵️‍♂️
 
-Find unused files, exports, functions, components, and APIs before they become technical debt.
+Find unused files, exports, functions, components, APIs, and imports before they become technical debt.
 
-Orphix uses static analysis and AST parsing via Babel to construct your project's dependency graph, identify orphaned files, discover unused module exports, and locate dead local functions and React components.
+Orphix uses static analysis and AST parsing via Babel to construct your project's dependency graph, identify orphaned files, discover unused module exports, locate dead local functions/React components, map dead API routes, and clean up the code automatically.
 
 ---
 
@@ -11,7 +11,13 @@ Orphix uses static analysis and AST parsing via Babel to construct your project'
 - **Unused File Detection**: Identifies files that are completely unreachable from your entry points.
 - **Unused Export Detection**: Flags module exports that are never imported anywhere in the project.
 - **Unused Function & Component Detection**: Finds functions and React components declared but never invoked or rendered.
-- **Git History Metadata**: Retrieves the last modification date and author of unused items to help prioritize cleanups.
+- **Unused Imports Detection**: Identifies imported bindings that are never referenced in the declaring file.
+- **Delete Confidence Scores**: Dynamically scores issues (99%, 95%, 90%, 85%) to guide safe cleanup decisions.
+- **Framework Awareness**: Out-of-the-box entrypoint auto-detection for **Next.js** (pages, layouts, API routes) and **Vite**.
+- **Barrel File / Re-export Propagation**: Follows re-exports (e.g. `export { x } from './module'`) to trace usage back to its origin file correctly.
+- **Dead API Route Tracing**: Extracts Next.js API endpoints and scans string/template literals across the project to flag unused endpoints.
+- **Automatic Code Cleanup (`--clean`)**: Rewrites files using Babel-traverse codemods to delete orphaned files, strip unused imports, and demote/remove unused exports.
+- **Git History Integration**: Attaches the last modification date and author to unused items to help coordinate cleanups.
 - **CI/CD Integration**: Supports pipeline failures via the `--fail-on-dead-code` exit flag.
 - **Babel AST Support**: Out-of-the-box support for modern JavaScript, JSX, TypeScript, and TSX.
 
@@ -19,7 +25,7 @@ Orphix uses static analysis and AST parsing via Babel to construct your project'
 
 ## Installation
 
-You can run Orphix directly without installation using `npx`:
+Run Orphix directly without installation using `npx`:
 
 ```bash
 npx orphix
@@ -41,23 +47,54 @@ npm install --save-dev orphix
 
 ## CLI Options
 
+Running `npx orphix --help` outputs:
+
 ```bash
 Usage: orphix [options] [dir]
 
+Find unused files, exports, functions, and components in your JS/TS codebase
+
 Arguments:
-  dir                      Directory to scan (default: ".")
+  dir                       directory to scan (default: ".")
 
 Options:
-  -v, --version            output the version number
-  --json                   output result in JSON format (default: false)
-  --verbose                detailed logs (default: false)
-  --fail-on-dead-code      exit with code 1 if dead code is found (default: false)
-  --git                    extract git history metadata (last edit date/author) (default: false)
-  --ignore <patterns...>   glob patterns of files to ignore
-  --entry <entryPoints...> explicit entry point files
-  --clean                  automatically delete unused files and clean up dead code
-  -h, --help               display help for command
+  -V, --version             output the version number
+  --json                    output result in JSON format (default: false)
+  --verbose                 detailed logs (default: false)
+  --fail-on-dead-code       exit with code 1 if dead code is found (default: false)
+  --git                     extract git history metadata (last edit date/author) (default: false)
+  --ignore <patterns...>    glob patterns of files to ignore
+  --entry <entryPoints...>  explicit entry point files
+  --clean                   automatically delete unused files and clean up dead code (default: false)
+  -h, --help                display help for command
 ```
+
+---
+
+## Configuration (`orphix.config.json`)
+
+You can define a configuration file named `orphix.config.json` in the root of your target directory. It merges seamlessly with command-line options.
+
+```json
+{
+  "entryPoints": ["src/index.js", "src/admin.js"],
+  "ignore": ["**/tests/**", "**/*.test.js"],
+  "git": true,
+  "failOnDeadCode": false,
+  "verbose": false,
+  "json": false
+}
+```
+
+---
+
+## Confidence Scores
+
+Orphix classifies identified unused items with a **Delete Confidence Score** based on the structural risk of deletion:
+- **`99%` Confidence**: Completely isolated items. Unused files, unreferenced imports, or private helper functions.
+- **`95%` Confidence**: Unused exports that are never imported elsewhere and have no internal references within their own file.
+- **`90%` Confidence**: Unused API endpoints that are not referenced in static strings/template literals.
+- **`85%` Confidence**: Unused exports that are still referenced internally within their own file. They are safe to demote (remove the `export` keyword) but the code should be preserved.
 
 ---
 
@@ -106,7 +143,7 @@ npx orphix --json
 ```
 
 ### Automatic Code Cleanup
-Automatically delete unused files, strip unused imports, and remove dead exports from the codebase:
+Automatically delete unused files, strip unused imports, and clean up exports/functions:
 ```bash
 npx orphix --clean
 ```
@@ -118,11 +155,13 @@ npx orphix --clean
 1. **Scanner**: Scans the targeted folder using `fast-glob`. It respects default rules (ignores `node_modules`, `.git`, `dist`, etc.) and automatically parses `.gitignore` file patterns if present.
 2. **Parser**: Translates source code into Abstract Syntax Trees (AST) using `@babel/parser` supporting TypeScript and JSX.
 3. **Graph Builder**: Traces static imports, dynamic imports, and CommonJS `require()` calls to determine reachable code paths.
-4. **Analyzer**: cross-references imported specifiers and internal references to detect dead exports or functions.
-5. **Reporter**: Displays detailed colorized summaries on stdout.
+4. **Analyzer**: Cross-references imported specifiers and internal references to detect dead exports, unused imports, dead API endpoints, and propagates barrel re-exports.
+5. **Cleaner**: Modifies the file ASTs using `@babel/traverse` and `@babel/generator` to prune unused code, strip `export` keywords, remove empty import statements, and delete orphaned files.
+6. **Reporter**: Displays detailed colorized summaries on stdout.
 
 ---
 
 ## License
 
 MIT
+
