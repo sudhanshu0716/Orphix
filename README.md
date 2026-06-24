@@ -12,7 +12,6 @@ Orphix uses static analysis and AST parsing via Babel to construct your project'
 - **Unused Export Detection**: Flags module exports that are never imported anywhere in the project.
 - **Unused Function & Component Detection**: Finds functions and React components declared but never invoked or rendered.
 - **Unused Imports Detection**: Identifies imported bindings that are never referenced in the declaring file.
-- **Delete Confidence Scores**: Dynamically scores issues (99%, 95%, 90%, 85%) to guide safe cleanup decisions.
 - **Framework Awareness**: Out-of-the-box entrypoint auto-detection for **Next.js** (pages, layouts, API routes) and **Vite**.
 - **Barrel File / Re-export Propagation**: Follows re-exports (e.g. `export { x } from './module'`) to trace usage back to its origin file correctly.
 - **Dead API Route Tracing**: Extracts Next.js API endpoints and scans string/template literals across the project to flag unused endpoints.
@@ -85,16 +84,6 @@ You can define a configuration file named `orphix.config.json` in the root of yo
   "json": false
 }
 ```
-
----
-
-## Confidence Scores
-
-Orphix classifies identified unused items with a **Delete Confidence Score** based on the structural risk of deletion:
-- **`99%` Confidence**: Completely isolated items. Unused files, unreferenced imports, or private helper functions.
-- **`95%` Confidence**: Unused exports that are never imported elsewhere and have no internal references within their own file.
-- **`90%` Confidence**: Unused API endpoints that are not referenced in static strings/template literals.
-- **`85%` Confidence**: Unused exports that are still referenced internally within their own file. They are safe to demote (remove the `export` keyword) but the code should be preserved.
 
 ---
 

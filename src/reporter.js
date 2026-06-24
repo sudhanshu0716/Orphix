@@ -1,14 +1,5 @@
 import pc from 'picocolors';
 
-function formatConfidence(score) {
-  if (score === undefined) return '';
-  const text = `[Delete Confidence: ${score}%]`;
-  if (score >= 95) {
-    return pc.green(text);
-  }
-  return pc.yellow(text);
-}
-
 /**
  * Reports analysis results to console.
  * @param {object} results - analyzer output
@@ -40,7 +31,7 @@ export function reportResults(results, options = {}) {
       if (f.gitInfo) {
         gitStr = pc.dim(` (Last updated ${f.gitInfo.relativeDate} by ${f.gitInfo.author})`);
       }
-      console.log(`  ${pc.bold(pc.red(f.relativeFile))}${gitStr} ${formatConfidence(f.confidence)}`);
+      console.log(`  ${pc.bold(pc.red(f.relativeFile))}${gitStr}`);
     });
     console.log();
   }
@@ -53,7 +44,7 @@ export function reportResults(results, options = {}) {
       if (e.gitInfo) {
         gitStr = pc.dim(` (Last updated ${e.gitInfo.relativeDate} by ${e.gitInfo.author})`);
       }
-      console.log(`  ${pc.bold(e.relativeFile)}:${pc.cyan(e.line)} - Export ${pc.bold(pc.yellow(e.name))}${gitStr} ${formatConfidence(e.confidence)}`);
+      console.log(`  ${pc.bold(e.relativeFile)}:${pc.cyan(e.line)} - Export ${pc.bold(pc.yellow(e.name))}${gitStr}`);
     });
     console.log();
   }
@@ -67,7 +58,7 @@ export function reportResults(results, options = {}) {
         gitStr = pc.dim(` (Last updated ${f.gitInfo.relativeDate} by ${f.gitInfo.author})`);
       }
       const typeStr = f.isReactComponent ? pc.cyan('React Component') : pc.green('Function');
-      console.log(`  ${pc.bold(f.relativeFile)}:${pc.cyan(f.line)} - Unused ${typeStr}: ${pc.bold(pc.magenta(f.name))}${gitStr} ${formatConfidence(f.confidence)}`);
+      console.log(`  ${pc.bold(f.relativeFile)}:${pc.cyan(f.line)} - Unused ${typeStr}: ${pc.bold(pc.magenta(f.name))}${gitStr}`);
     });
     console.log();
   }
@@ -80,7 +71,7 @@ export function reportResults(results, options = {}) {
       if (api.gitInfo) {
         gitStr = pc.dim(` (Last updated ${api.gitInfo.relativeDate} by ${api.gitInfo.author})`);
       }
-      console.log(`  ${pc.bold(api.relativeFile)} - Endpoint ${pc.bold(pc.blue(api.endpoint))}${gitStr} ${formatConfidence(api.confidence)}`);
+      console.log(`  ${pc.bold(api.relativeFile)} - Endpoint ${pc.bold(pc.blue(api.endpoint))}${gitStr}`);
     });
     console.log();
   }
@@ -93,7 +84,7 @@ export function reportResults(results, options = {}) {
       if (imp.gitInfo) {
         gitStr = pc.dim(` (Last updated ${imp.gitInfo.relativeDate} by ${imp.gitInfo.author})`);
       }
-      console.log(`  ${pc.bold(imp.relativeFile)} - Unused Import ${pc.bold(pc.cyan(imp.name))} from "${imp.source}"${gitStr} ${formatConfidence(imp.confidence)}`);
+      console.log(`  ${pc.bold(imp.relativeFile)} - Unused Import ${pc.bold(pc.cyan(imp.name))} from "${imp.source}"${gitStr}`);
     });
     console.log();
   }

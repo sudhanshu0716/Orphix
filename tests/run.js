@@ -25,12 +25,6 @@ async function runTests() {
   const unusedImp = results.unusedImports.find(imp => imp.name === 'unusedExport' && imp.relativeFile === 'index.js');
   if (unusedImp) {
     console.log("✅ Correctly identified unused import 'unusedExport' in index.js.");
-    if (unusedImp.confidence === 99) {
-      console.log("✅ Correctly calculated confidence for unused import (99%).");
-    } else {
-      console.error("❌ Incorrect confidence for unused import. Got:", unusedImp.confidence);
-      failed = true;
-    }
   } else {
     console.error("❌ Failed to identify unused import 'unusedExport' in index.js. Found:", results.unusedImports);
     failed = true;
@@ -40,12 +34,6 @@ async function runTests() {
   const subtractExport = results.unusedExports.find(e => e.name === 'subtract' && e.relativeFile === 'used.js');
   if (subtractExport) {
     console.log("✅ Correctly identified unused export 'subtract' in used.js.");
-    if (subtractExport.confidence === 99) {
-      console.log("✅ Correctly calculated confidence for 'subtract' export (99%).");
-    } else {
-      console.error("❌ Incorrect confidence for 'subtract' export. Got:", subtractExport.confidence);
-      failed = true;
-    }
   } else {
     console.error("❌ Failed to identify unused export 'subtract' in used.js. Found:", results.unusedExports);
     failed = true;
@@ -55,12 +43,6 @@ async function runTests() {
   const helperFn = results.unusedFunctions.find(f => f.name === 'helperFunction' && f.relativeFile === 'used.js');
   if (helperFn) {
     console.log("✅ Correctly identified unused function 'helperFunction' in used.js.");
-    if (helperFn.confidence === 99) {
-      console.log("✅ Correctly calculated confidence for 'helperFunction' function (99%).");
-    } else {
-      console.error("❌ Incorrect confidence for 'helperFunction' function. Got:", helperFn.confidence);
-      failed = true;
-    }
   } else {
     console.error("❌ Failed to identify unused function 'helperFunction' in used.js. Found:", results.unusedFunctions);
     failed = true;
