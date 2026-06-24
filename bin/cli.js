@@ -5,12 +5,31 @@ import path from 'path';
 import { analyzeProject } from '../src/analyzer.js';
 import { reportResults } from '../src/reporter.js';
 import { cleanProject } from '../src/cleaner.js';
+import pc from 'picocolors';
 
 import fs from 'fs';
 
 const packageJson = JSON.parse(
   fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
 );
+
+const banner = [
+  "  ___            _     _       ",
+  " / _ \\ _ __ _ __| |__ (_)_  __ ",
+  "| | | | '__| '_ \\ '_ \\| \\ \\/ / ",
+  "| |_| | |  | |_) | | | | |>  <  ",
+  " \\___/|_|  | .__/|_| |_|_/_/\\_\\ ",
+  "           |_|                 "
+];
+
+async function drawLogo() {
+  const colors = [pc.cyan, pc.cyan, pc.blue, pc.blue, pc.magenta, pc.magenta];
+  for (let i = 0; i < banner.length; i++) {
+    console.log(colors[i](banner[i]));
+    await new Promise(r => setTimeout(r, 35));
+  }
+  console.log();
+}
 
 const program = new Command();
 
@@ -48,8 +67,29 @@ program
         entryPoints: options.entry || (fileConfig.entryPoints ? fileConfig.entryPoints.map(e => path.resolve(targetDir, e)) : undefined),
       };
 
+      if (!config.json) {
+        await drawLogo();
+      }
+
+      // Start spinner
+      let spinnerInterval;
+      if (!config.json) {
+        let frameIndex = 0;
+        const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+        spinnerInterval = setInterval(() => {
+          process.stdout.write(`\r${pc.cyan(frames[frameIndex])} ${pc.bold('Orphix is scanning your codebase...')}`);
+          frameIndex = (frameIndex + 1) % frames.length;
+        }, 80);
+      }
+
       const results = await analyzeProject(targetDir, config);
       
+      // Stop spinner
+      if (spinnerInterval) {
+        clearInterval(spinnerInterval);
+        process.stdout.write('\r\x1b[K'); // clear the line
+      }
+
       reportResults(results, { json: config.json });
 
       if (options.clean) {
