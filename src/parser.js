@@ -171,8 +171,70 @@ export function parseFile(filePath) {
         referencedNames.add(pathNode.node.name);
       }
     },
-    JSXIdentifier(pathNode) {
-      referencedNames.add(pathNode.node.name);
+    JSXOpeningElement(pathNode) {
+      const nameNode = pathNode.node.name;
+      if (nameNode.type === 'JSXIdentifier') {
+        referencedNames.add(nameNode.name);
+      } else if (nameNode.type === 'JSXMemberExpression') {
+        let obj = nameNode.object;
+        while (obj.type === 'JSXMemberExpression') {
+          obj = obj.object;
+        }
+        if (obj.type === 'JSXIdentifier') {
+          referencedNames.add(obj.name);
+        }
+      }
+    },
+    AssignmentExpression(pathNode) {
+      const left = pathNode.node.left;
+      const right = pathNode.node.right;
+      const line = pathNode.node.loc?.start.line;
+
+      if (left.type === 'MemberExpression') {
+        // Case 1: exports.foo = ...
+        if (left.object.type === 'Identifier' && left.object.name === 'exports') {
+          if (left.property.type === 'Identifier') {
+            const name = left.property.name;
+            exports.push({ name, isDefault: false, line });
+            exportedNames.add(name);
+          }
+        }
+        // Case 2: module.exports = ...
+        else if (
+          left.object.type === 'Identifier' &&
+          left.object.name === 'module' &&
+          left.property.type === 'Identifier' &&
+          left.property.name === 'exports'
+        ) {
+          if (right.type === 'ObjectExpression') {
+            for (const prop of right.properties) {
+              if (prop.type === 'ObjectProperty') {
+                if (prop.key.type === 'Identifier') {
+                  exports.push({ name: prop.key.name, isDefault: false, line });
+                  exportedNames.add(prop.key.name);
+                }
+              }
+            }
+          } else {
+            exports.push({ name: 'default', isDefault: true, line });
+            exportedNames.add('default');
+          }
+        }
+        // Case 3: module.exports.foo = ...
+        else if (
+          left.object.type === 'MemberExpression' &&
+          left.object.object.type === 'Identifier' &&
+          left.object.object.name === 'module' &&
+          left.object.property.type === 'Identifier' &&
+          left.object.property.name === 'exports'
+        ) {
+          if (left.property.type === 'Identifier') {
+            const name = left.property.name;
+            exports.push({ name, isDefault: false, line });
+            exportedNames.add(name);
+          }
+        }
+      }
     },
     StringLiteral(pathNode) {
       stringLiterals.add(pathNode.node.value);
