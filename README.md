@@ -1,20 +1,11 @@
 # Orphix 🕵️‍♂️
 
 <div align="left">
-  <!-- Contact Badges -->
-  <a href="mailto:sudh0716@gmail.com"><img src="https://img.shields.io/badge/Email-SUDH0716%40GMAIL.COM-red?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"/></a>
-  <a href="https://www.linkedin.com/in/sudh0716"><img src="https://img.shields.io/badge/LinkedIn-SUDH0716-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn"/></a>
-  <a href="https://leetcode.com/sudhanshu0716"><img src="https://img.shields.io/badge/LeetCode-SUDHANSHU0716-orange?style=for-the-badge&logo=leetcode&logoColor=white" alt="LeetCode"/></a>
-</div>
-
-<br/>
-
-<div align="left">
   <!-- Library Status Badges -->
-  <a href="https://www.npmjs.com/package/orphix"><img src="https://img.shields.io/npm/v/orphix.svg?style=flat-square&color=007acc" alt="npm version"/></a>
-  <a href="https://www.npmjs.com/package/orphix"><img src="https://img.shields.io/npm/dm/orphix.svg?style=flat-square&color=4c1" alt="npm downloads"/></a>
-  <a href="https://github.com/sudhanshu0716/Orphix"><img src="https://img.shields.io/github/stars/sudhanshu0716/Orphix.svg?style=flat-square&color=yellow" alt="GitHub stars"/></a>
-  <a href="LICENSE"><img src="https://img.shields.io/npm/l/orphix.svg?style=flat-square&color=ff69b4" alt="License"/></a>
+  <a href="https://www.npmjs.com/package/orphix"><img src="https://img.shields.io/npm/v/orphix?style=for-the-badge&color=007acc" alt="npm version"/></a>
+  <a href="https://www.npmjs.com/package/orphix"><img src="https://img.shields.io/npm/dm/orphix?style=for-the-badge&color=44cc11" alt="npm downloads"/></a>
+  <a href="https://github.com/sudhanshu0716/Orphix"><img src="https://img.shields.io/github/stars/sudhanshu0716/Orphix?style=for-the-badge&color=ffcc00" alt="GitHub stars"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/npm/l/orphix?style=for-the-badge&color=ff69b4" alt="License"/></a>
 </div>
 
 ---
