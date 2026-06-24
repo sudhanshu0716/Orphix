@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import { analyzeProject } from '../src/analyzer.js';
 
 async function runTests() {
@@ -7,11 +8,30 @@ async function runTests() {
   const fixtureDir = path.resolve('tests/fixtures/simple-project');
   const entryPoint = path.join(fixtureDir, 'index.js');
 
-  const results = await analyzeProject(fixtureDir, {
-    entryPoints: [entryPoint]
-  });
+  // Create temporary config files to verify they are ignored/protected
+  const tempConfigFiles = [
+    path.join(fixtureDir, '.eslintrc.js'),
+    path.join(fixtureDir, 'vite.config.ts'),
+    path.join(fixtureDir, 'webpack.mix.js'),
+    path.join(fixtureDir, 'my-custom.config.js'),
+  ];
+  for (const file of tempConfigFiles) {
+    fs.writeFileSync(file, 'export default {};');
+  }
 
+  let results;
   let failed = false;
+  try {
+    results = await analyzeProject(fixtureDir, {
+      entryPoints: [entryPoint]
+    });
+  } finally {
+    for (const file of tempConfigFiles) {
+      if (fs.existsSync(file)) {
+        fs.unlinkSync(file);
+      }
+    }
+  }
 
   // 1. Verify Unused Files
   if (results.unusedFiles.length === 0) {

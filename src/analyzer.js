@@ -5,17 +5,60 @@ import { parseFile } from './parser.js';
 import { buildDependencyGraph, resolveImport, findProjectRoots } from './graph.js';
 import { getGitHistory } from './git.js';
 
-const PROTECTED_CONFIG_FILES = new Set([
-  'vite.config.js', 'vite.config.ts', 'vite.config.mjs', 'vite.config.cjs',
-  'next.config.js', 'next.config.mjs', 'next.config.ts',
-  'tailwind.config.js', 'tailwind.config.cjs', 'tailwind.config.ts',
-  'postcss.config.js', 'postcss.config.cjs',
-  'eslint.config.js', 'eslint.config.cjs', 'eslint.config.mjs',
-  'tsconfig.json', 'jsconfig.json',
-  'orphix.config.json',
-  'package.json', 'package-lock.json',
-  'webpack.config.js', 'webpack.config.ts', 'babel.config.js', 'babel.config.json'
-]);
+function isConfigurationFile(filename) {
+  const base = filename.toLowerCase();
+  
+  // Starts with '.' (e.g., .eslintrc, .babelrc, .prettierrc.js, .gitignore)
+  if (base.startsWith('.')) return true;
+  
+  // Contains '.config.' or ends with config extensions
+  if (base.includes('.config.')) return true;
+  
+  // Matches any file ending in config-related suffixes
+  if (
+    base.endsWith('config.js') ||
+    base.endsWith('config.ts') ||
+    base.endsWith('config.cjs') ||
+    base.endsWith('config.mjs') ||
+    base.endsWith('config.json') ||
+    base.endsWith('config.yaml') ||
+    base.endsWith('config.yml')
+  ) {
+    return true;
+  }
+  
+  // Common project config/meta files
+  const common = new Set([
+    'package.json',
+    'package-lock.json',
+    'yarn.lock',
+    'pnpm-lock.yaml',
+    'bun.lockb',
+    'tsconfig.json',
+    'jsconfig.json',
+    'orphix.config.json',
+    'gulpfile.js',
+    'gulpfile.ts',
+    'gulpfile.babel.js',
+    'gruntfile.js',
+    'gruntfile.cjs',
+    'gruntfile.mjs',
+    'webpack.js',
+    'webpack.ts',
+    'webpack.mix.js',
+    'webpack.mix.cjs',
+    'webpack.mix.mjs',
+    'lerna.json',
+    'nx.json',
+    'turbo.json',
+    'bower.json',
+    'nest-cli.json'
+  ]);
+  
+  if (common.has(base)) return true;
+  
+  return false;
+}
 
 function getApiEndpoint(relativeFile) {
   const clean = relativeFile.replace(/\\/g, '/');
@@ -78,7 +121,7 @@ export async function analyzeProject(targetDir, options = {}) {
   // 1. Identify unused (orphan) files
   for (const file of files) {
     const baseName = path.basename(file);
-    if (PROTECTED_CONFIG_FILES.has(baseName)) continue;
+    if (isConfigurationFile(baseName)) continue;
 
     if (!reachable.has(file)) {
       const gitInfo = options.git ? getGitHistory(file) : null;
