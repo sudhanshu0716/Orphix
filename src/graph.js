@@ -10,13 +10,35 @@ const EXTENSIONS = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json'];
  * @returns {string|null} resolved absolute file path or null if external/unresolved
  */
 export function resolveImport(importerPath, source) {
-  // If it doesn't start with . or / or \, treat as third-party / external
-  if (!source.startsWith('.') && !path.isAbsolute(source)) {
-    return null;
+  let targetPath = null;
+
+  if (source.startsWith('@/')) {
+    let currentDir = path.dirname(importerPath);
+    let projectRoot = null;
+    while (currentDir && currentDir !== path.dirname(currentDir)) {
+      if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+        projectRoot = currentDir;
+        break;
+      }
+      currentDir = path.dirname(currentDir);
+    }
+    if (projectRoot) {
+      const srcDir = path.join(projectRoot, 'src');
+      if (fs.existsSync(srcDir) && fs.statSync(srcDir).isDirectory()) {
+        targetPath = path.resolve(srcDir, source.slice(2));
+      }
+    }
   }
 
-  const importerDir = path.dirname(importerPath);
-  const targetPath = path.resolve(importerDir, source);
+  if (!targetPath) {
+    // If it doesn't start with . or / or \, treat as third-party / external
+    if (!source.startsWith('.') && !path.isAbsolute(source)) {
+      return null;
+    }
+
+    const importerDir = path.dirname(importerPath);
+    targetPath = path.resolve(importerDir, source);
+  }
 
   // 1. Direct file check
   if (fs.existsSync(targetPath) && fs.statSync(targetPath).isFile()) {
