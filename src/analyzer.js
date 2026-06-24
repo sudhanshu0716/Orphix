@@ -54,7 +54,8 @@ export async function analyzeProject(targetDir, options = {}) {
   const { graph, incomingImports, reachable, entryPoints } = buildDependencyGraph(
     files,
     parsedFiles,
-    options.entryPoints
+    options.entryPoints,
+    targetDir
   );
 
   const unusedFiles = [];

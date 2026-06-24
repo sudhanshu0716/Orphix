@@ -97,6 +97,24 @@ async function runTests() {
     failed = true;
   }
 
+  // 6. Run monorepo project test (client/server auto-detection)
+  const monorepoFixtureDir = path.resolve('tests/fixtures/monorepo-project');
+  const monorepoResults = await analyzeProject(monorepoFixtureDir);
+
+  const unusedFilesList = monorepoResults.unusedFiles.map(f => f.relativeFile.replace(/\\/g, '/'));
+  const expectedUnused = 'server/src/unused.js';
+  const unexpectedUnused = ['client/src/App.jsx', 'client/src/main.jsx', 'server/src/server.js', 'server/src/db.js'];
+
+  const hasExpected = unusedFilesList.includes(expectedUnused);
+  const hasUnexpected = unexpectedUnused.some(f => unusedFilesList.includes(f));
+
+  if (hasExpected && !hasUnexpected) {
+    console.log("✅ Correctly handled monorepo/client-server: only 'server/src/unused.js' is unused.");
+  } else {
+    console.error("❌ Monorepo client-server auto-detection failed. Found unused files:", unusedFilesList);
+    failed = true;
+  }
+
   if (failed) {
     console.error("❌ Tests failed!");
     process.exit(1);

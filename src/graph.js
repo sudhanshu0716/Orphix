@@ -45,13 +45,65 @@ export function resolveImport(importerPath, source) {
 }
 
 /**
+ * Helper to find all distinct project roots containing a package.json file,
+ * walking up from each file directory until we reach the target directory.
+ */
+function findProjectRoots(allFiles, targetDir) {
+  const roots = new Set();
+  const targetDirResolved = path.resolve(targetDir);
+  roots.add(targetDirResolved);
+
+  for (const file of allFiles) {
+    let currentDir = path.dirname(file);
+    while (currentDir.startsWith(targetDirResolved) && currentDir !== targetDirResolved) {
+      if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+        roots.add(currentDir);
+      }
+      const parent = path.dirname(currentDir);
+      if (parent === currentDir) break;
+      currentDir = parent;
+    }
+  }
+
+  // Sort by length descending so that the deepest matching path matches first
+  return Array.from(roots).sort((a, b) => b.length - a.length);
+}
+
+/**
+ * Helper to check if a directory is a Next.js project.
+ */
+function isNextJSProject(dir) {
+  if (
+    fs.existsSync(path.join(dir, 'next.config.js')) ||
+    fs.existsSync(path.join(dir, 'next.config.mjs')) ||
+    fs.existsSync(path.join(dir, 'next.config.ts'))
+  ) {
+    return true;
+  }
+  const pkgPath = path.join(dir, 'package.json');
+  if (fs.existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+      if (
+        (pkg.dependencies && pkg.dependencies.next) ||
+        (pkg.devDependencies && pkg.devDependencies.next)
+      ) {
+        return true;
+      }
+    } catch (e) {}
+  }
+  return false;
+}
+
+/**
  * Builds the dependency graph and returns reachability info.
  * @param {string[]} allFiles - list of all project files
  * @param {object} parsedFiles - map of file paths to their parsed imports/exports
  * @param {string[]} [explicitEntryPoints] - list of entry point files
+ * @param {string} [targetDir] - scanning target directory
  * @returns {object} { graph, reachable, entryPoints }
  */
-export function buildDependencyGraph(allFiles, parsedFiles, explicitEntryPoints = []) {
+export function buildDependencyGraph(allFiles, parsedFiles, explicitEntryPoints = [], targetDir = '.') {
   const graph = {}; // parent -> child[]
   const incomingImports = {}; // child -> parent[]
 
@@ -84,37 +136,84 @@ export function buildDependencyGraph(allFiles, parsedFiles, explicitEntryPoints 
   if (explicitEntryPoints && explicitEntryPoints.length > 0) {
     entryPoints = explicitEntryPoints.map(f => path.resolve(f));
   } else {
-    // Auto-detect framework files (Next.js layout/page/route)
-    const nextjsPatterns = [
-      /\/pages\/.*\.[jt]sx?$/,
-      /\/app\/.*\/page\.[jt]sx?$/,
-      /\/app\/.*\/layout\.[jt]sx?$/,
-      /\/app\/.*\/route\.[jt]s$/,
-    ];
+    // 1. Find all project roots
+    const projectRoots = findProjectRoots(allFiles, targetDir);
 
-    const frameworkEntryPoints = allFiles.filter(file => {
-      const normalizedPath = file.replace(/\\/g, '/');
-      return nextjsPatterns.some(pattern => pattern.test(normalizedPath));
-    });
-
-    if (frameworkEntryPoints.length > 0) {
-      entryPoints = frameworkEntryPoints;
-    } else {
-      // Auto-detect: files with no incoming imports
-      entryPoints = allFiles.filter(file => incomingImports[file].length === 0);
-
-      // If everything is cyclic or we have no obvious entries, check common files
-      if (entryPoints.length === 0 && allFiles.length > 0) {
-        const commonNames = ['index', 'main', 'app'];
-        entryPoints = allFiles.filter(file => {
-          const base = path.basename(file, path.extname(file)).toLowerCase();
-          return commonNames.includes(base);
-        });
-        // Fallback to the first file if still empty
-        if (entryPoints.length === 0) {
-          entryPoints = [allFiles[0]];
+    // 2. Group files by their project root
+    const groups = {};
+    for (const root of projectRoots) {
+      groups[root] = [];
+    }
+    for (const file of allFiles) {
+      for (const root of projectRoots) {
+        if (file.startsWith(root)) {
+          groups[root].push(file);
+          break;
         }
       }
+    }
+
+    // 3. Detect entry points for each group independently
+    for (const root of projectRoots) {
+      const groupFiles = groups[root];
+      if (!groupFiles || groupFiles.length === 0) continue;
+
+      const isNext = isNextJSProject(root);
+      let groupEntryPoints = [];
+
+      if (isNext) {
+        // Auto-detect framework files (Next.js layout/page/route)
+        const nextjsPatterns = [
+          /\/pages\/.*\.[jt]sx?$/,
+          /\/app\/.*\/page\.[jt]sx?$/,
+          /\/app\/.*\/layout\.[jt]sx?$/,
+          /\/app\/.*\/route\.[jt]s$/,
+        ];
+
+        groupEntryPoints = groupFiles.filter(file => {
+          const normalizedPath = file.replace(/\\/g, '/');
+          return nextjsPatterns.some(pattern => pattern.test(normalizedPath));
+        });
+      }
+
+      if (groupEntryPoints.length === 0) {
+        // Auto-detect: files with no incoming imports from within the SAME project group
+        const zeroIncoming = groupFiles.filter(file => {
+          const incoming = incomingImports[file] || [];
+          const localIncoming = incoming.filter(f => groupFiles.includes(f));
+          return localIncoming.length === 0;
+        });
+
+        if (zeroIncoming.length > 1) {
+          const commonNames = ['index', 'main', 'app', 'server', 'run', 'cli'];
+          const matchingCommon = zeroIncoming.filter(file => {
+            const base = path.basename(file, path.extname(file)).toLowerCase();
+            return commonNames.includes(base);
+          });
+          if (matchingCommon.length > 0) {
+            groupEntryPoints = matchingCommon;
+          } else {
+            groupEntryPoints = zeroIncoming;
+          }
+        } else {
+          groupEntryPoints = zeroIncoming;
+        }
+
+        // If everything is cyclic or we have no obvious entries, check common files
+        if (groupEntryPoints.length === 0 && groupFiles.length > 0) {
+          const commonNames = ['index', 'main', 'app', 'server', 'run', 'cli'];
+          groupEntryPoints = groupFiles.filter(file => {
+            const base = path.basename(file, path.extname(file)).toLowerCase();
+            return commonNames.includes(base);
+          });
+          // Fallback to the first file if still empty
+          if (groupEntryPoints.length === 0) {
+            groupEntryPoints = [groupFiles[0]];
+          }
+        }
+      }
+
+      entryPoints.push(...groupEntryPoints);
     }
   }
 
