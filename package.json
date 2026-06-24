@@ -1,0 +1,44 @@
+{
+  "name": "orphix",
+  "version": "1.0.0",
+  "description": "Find unused files, exports, functions, components, and APIs in JS/TS projects",
+  "main": "src/analyzer.js",
+  "type": "module",
+  "bin": {
+    "orphix": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node tests/run.js"
+  },
+  "keywords": [
+    "dead-code",
+    "static-analysis",
+    "unused",
+    "clean",
+    "refactor"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/orphix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/orphix/issues"
+  },
+  "homepage": "https://github.com/yourusername/orphix#readme",
+  "dependencies": {
+    "@babel/generator": "^7.29.7",
+    "@babel/parser": "^7.29.7",
+    "@babel/traverse": "^7.29.7",
+    "commander": "^15.0.0",
+    "fast-glob": "^3.3.3",
+    "picocolors": "^1.1.1"
+  }
+}
