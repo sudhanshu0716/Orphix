@@ -67,6 +67,51 @@ export function resolveImport(importerPath, source) {
 }
 
 /**
+ * Resolves a dynamic import directory source path relative to the importing file.
+ * @param {string} importerPath - absolute path of the importing file
+ * @param {string} source - raw import string directory prefix
+ * @returns {string|null} resolved absolute directory path or null
+ */
+export function resolveImportDir(importerPath, source) {
+  let targetPath = null;
+
+  if (source.startsWith('@/')) {
+    let currentDir = path.dirname(importerPath);
+    let projectRoot = null;
+    while (currentDir && currentDir !== path.dirname(currentDir)) {
+      if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+        projectRoot = currentDir;
+        break;
+      }
+      currentDir = path.dirname(currentDir);
+    }
+    if (projectRoot) {
+      const srcDir = path.join(projectRoot, 'src');
+      if (fs.existsSync(srcDir) && fs.statSync(srcDir).isDirectory()) {
+        targetPath = path.resolve(srcDir, source.slice(2));
+      }
+    }
+  }
+
+  if (!targetPath) {
+    if (!source.startsWith('.') && !path.isAbsolute(source)) {
+      return null;
+    }
+    const importerDir = path.dirname(importerPath);
+    targetPath = path.resolve(importerDir, source);
+  }
+
+  // Walk up until we find an existing directory (in case the source has a filename prefix)
+  while (targetPath && targetPath !== path.dirname(targetPath)) {
+    if (fs.existsSync(targetPath) && fs.statSync(targetPath).isDirectory()) {
+      return targetPath;
+    }
+    targetPath = path.dirname(targetPath);
+  }
+  return null;
+}
+
+/**
  * Helper to find all distinct project roots containing a package.json file,
  * walking up from each file directory until we reach the target directory.
  */
@@ -141,13 +186,30 @@ export function buildDependencyGraph(allFiles, parsedFiles, explicitEntryPoints 
     if (!fileData) continue;
 
     for (const imp of fileData.imports) {
-      const resolved = resolveImport(file, imp.source);
-      if (resolved && graph[resolved]) {
-        if (!graph[file].includes(resolved)) {
-          graph[file].push(resolved);
+      if (imp.isDynamicDir) {
+        const resolvedDir = resolveImportDir(file, imp.source);
+        if (resolvedDir) {
+          // Find all files in allFiles that lie within this resolved directory
+          for (const targetFile of allFiles) {
+            if (targetFile.startsWith(resolvedDir)) {
+              if (!graph[file].includes(targetFile)) {
+                graph[file].push(targetFile);
+              }
+              if (!incomingImports[targetFile].includes(file)) {
+                incomingImports[targetFile].push(file);
+              }
+            }
+          }
         }
-        if (!incomingImports[resolved].includes(file)) {
-          incomingImports[resolved].push(file);
+      } else {
+        const resolved = resolveImport(file, imp.source);
+        if (resolved && graph[resolved]) {
+          if (!graph[file].includes(resolved)) {
+            graph[file].push(resolved);
+          }
+          if (!incomingImports[resolved].includes(file)) {
+            incomingImports[resolved].push(file);
+          }
         }
       }
     }

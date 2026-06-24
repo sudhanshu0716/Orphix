@@ -78,6 +78,15 @@ export function parseFile(filePath) {
       if (pathNode.node.source.type === 'StringLiteral') {
         const source = pathNode.node.source.value;
         imports.push({ source, specifiers: [], isNamespace: true });
+      } else if (pathNode.node.source.type === 'TemplateLiteral') {
+        // Handle dynamic template-literal imports like import(`./pages/${pageName}`)
+        const firstQuasi = pathNode.node.source.quasis[0];
+        if (firstQuasi) {
+          const val = firstQuasi.value.cooked || firstQuasi.value.raw;
+          if (val && (val.startsWith('.') || val.startsWith('/') || val.startsWith('@/'))) {
+            imports.push({ source: val, specifiers: [], isNamespace: true, isDynamicDir: true });
+          }
+        }
       }
     },
     ExportDefaultDeclaration(pathNode) {
