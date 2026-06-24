@@ -3,18 +3,35 @@ import fs from 'fs';
 
 const EXTENSIONS = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json'];
 
-/**
- * Resolves an import source path relative to the importing file.
- * @param {string} importerPath - absolute path of the importing file
- * @param {string} source - raw import string
- * @returns {string|null} resolved absolute file path or null if external/unresolved
- */
-export function resolveImport(importerPath, source) {
-  let targetPath = null;
+// Helper to strip comments and parse JSON
+function parseJsonWithComments(content) {
+  const clean = content.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
+  return JSON.parse(clean);
+}
 
-  if (source.startsWith('@/')) {
-    let currentDir = path.dirname(importerPath);
-    let projectRoot = null;
+export function resolveAlias(importerPath, source) {
+  // Walk up from importerPath's directory to find the nearest tsconfig.json or jsconfig.json
+  let currentDir = path.dirname(importerPath);
+  let configPath = null;
+  let aliases = null;
+  let projectRoot = null;
+
+  while (currentDir && currentDir !== path.dirname(currentDir)) {
+    for (const file of ['tsconfig.json', 'jsconfig.json']) {
+      const p = path.join(currentDir, file);
+      if (fs.existsSync(p)) {
+        configPath = p;
+        projectRoot = currentDir;
+        break;
+      }
+    }
+    if (configPath) break;
+    currentDir = path.dirname(currentDir);
+  }
+
+  // If no tsconfig/jsconfig found, look for package.json to establish projectRoot for ~/ fallback
+  if (!projectRoot) {
+    currentDir = path.dirname(importerPath);
     while (currentDir && currentDir !== path.dirname(currentDir)) {
       if (fs.existsSync(path.join(currentDir, 'package.json'))) {
         projectRoot = currentDir;
@@ -22,10 +39,86 @@ export function resolveImport(importerPath, source) {
       }
       currentDir = path.dirname(currentDir);
     }
-    if (projectRoot) {
-      const srcDir = path.join(projectRoot, 'src');
-      if (fs.existsSync(srcDir) && fs.statSync(srcDir).isDirectory()) {
-        targetPath = path.resolve(srcDir, source.slice(2));
+  }
+
+  if (configPath) {
+    try {
+      const config = parseJsonWithComments(fs.readFileSync(configPath, 'utf-8'));
+      if (config.compilerOptions && config.compilerOptions.paths) {
+        aliases = {
+          baseUrl: config.compilerOptions.baseUrl || '.',
+          paths: config.compilerOptions.paths
+        };
+      }
+    } catch (e) {
+      // ignore parsing errors
+    }
+  }
+
+  if (!aliases) {
+    if (source.startsWith('~/') && projectRoot) {
+      return path.resolve(projectRoot, source.slice(2));
+    }
+    return null;
+  }
+
+  const { baseUrl, paths } = aliases;
+  const baseDir = path.resolve(projectRoot, baseUrl);
+
+  for (const [pattern, targetTemplates] of Object.entries(paths)) {
+    const hasWildcard = pattern.includes('*');
+    if (hasWildcard) {
+      const prefix = pattern.replace('*', '');
+      if (source.startsWith(prefix)) {
+        const wildcardVal = source.slice(prefix.length);
+        for (const template of targetTemplates) {
+          const resolvedTemplate = template.replace('*', wildcardVal);
+          return path.resolve(baseDir, resolvedTemplate);
+        }
+      }
+    } else {
+      if (source === pattern) {
+        for (const template of targetTemplates) {
+          return path.resolve(baseDir, template);
+        }
+      }
+    }
+  }
+
+  if (source.startsWith('~/') && projectRoot) {
+    return path.resolve(projectRoot, source.slice(2));
+  }
+
+  return null;
+}
+
+/**
+ * Resolves an import source path relative to the importing file.
+ * @param {string} importerPath - absolute path of the importing file
+ * @param {string} source - raw import string
+ * @returns {string|null} resolved absolute file path or null if external/unresolved
+ */
+export function resolveImport(importerPath, source) {
+  let targetPath = resolveAlias(importerPath, source);
+
+  if (!targetPath) {
+    if (source.startsWith('@/')) {
+      let currentDir = path.dirname(importerPath);
+      let projectRoot = null;
+      while (currentDir && currentDir !== path.dirname(currentDir)) {
+        if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+          projectRoot = currentDir;
+          break;
+        }
+        currentDir = path.dirname(currentDir);
+      }
+      if (projectRoot) {
+        const srcDir = path.join(projectRoot, 'src');
+        if (fs.existsSync(srcDir) && fs.statSync(srcDir).isDirectory()) {
+          targetPath = path.resolve(srcDir, source.slice(2));
+        } else {
+          targetPath = path.resolve(projectRoot, source.slice(2));
+        }
       }
     }
   }
@@ -73,22 +166,26 @@ export function resolveImport(importerPath, source) {
  * @returns {string|null} resolved absolute directory path or null
  */
 export function resolveImportDir(importerPath, source) {
-  let targetPath = null;
+  let targetPath = resolveAlias(importerPath, source);
 
-  if (source.startsWith('@/')) {
-    let currentDir = path.dirname(importerPath);
-    let projectRoot = null;
-    while (currentDir && currentDir !== path.dirname(currentDir)) {
-      if (fs.existsSync(path.join(currentDir, 'package.json'))) {
-        projectRoot = currentDir;
-        break;
+  if (!targetPath) {
+    if (source.startsWith('@/')) {
+      let currentDir = path.dirname(importerPath);
+      let projectRoot = null;
+      while (currentDir && currentDir !== path.dirname(currentDir)) {
+        if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+          projectRoot = currentDir;
+          break;
+        }
+        currentDir = path.dirname(currentDir);
       }
-      currentDir = path.dirname(currentDir);
-    }
-    if (projectRoot) {
-      const srcDir = path.join(projectRoot, 'src');
-      if (fs.existsSync(srcDir) && fs.statSync(srcDir).isDirectory()) {
-        targetPath = path.resolve(srcDir, source.slice(2));
+      if (projectRoot) {
+        const srcDir = path.join(projectRoot, 'src');
+        if (fs.existsSync(srcDir) && fs.statSync(srcDir).isDirectory()) {
+          targetPath = path.resolve(srcDir, source.slice(2));
+        } else {
+          targetPath = path.resolve(projectRoot, source.slice(2));
+        }
       }
     }
   }
@@ -101,12 +198,13 @@ export function resolveImportDir(importerPath, source) {
     targetPath = path.resolve(importerDir, source);
   }
 
-  // Walk up until we find an existing directory (in case the source has a filename prefix)
-  while (targetPath && targetPath !== path.dirname(targetPath)) {
-    if (fs.existsSync(targetPath) && fs.statSync(targetPath).isDirectory()) {
-      return targetPath;
-    }
-    targetPath = path.dirname(targetPath);
+  // Only check the path itself or its direct parent directory to avoid walking up to root
+  if (fs.existsSync(targetPath) && fs.statSync(targetPath).isDirectory()) {
+    return targetPath;
+  }
+  const parent = path.dirname(targetPath);
+  if (fs.existsSync(parent) && fs.statSync(parent).isDirectory()) {
+    return parent;
   }
   return null;
 }

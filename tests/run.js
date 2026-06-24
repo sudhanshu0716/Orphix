@@ -119,6 +119,51 @@ async function runTests() {
     failed = true;
   }
 
+  // 7. Robustness and Bug Fixes verification (TS, aliases, destructuring, side-effect preservation)
+  const robustnessFixtureDir = path.resolve('tests/fixtures/robustness-project');
+  const robustnessResults = await analyzeProject(robustnessFixtureDir, {
+    entryPoints: [path.join(robustnessFixtureDir, 'index.ts')]
+  });
+
+  const robustnessUnusedList = robustnessResults.unusedFiles.map(f => f.relativeFile.replace(/\\/g, '/'));
+  
+  // Verify dynamic import dir walk-up doesn't make unused-file.js reachable (should be unused)
+  if (robustnessUnusedList.includes('unused-file.js')) {
+    console.log("✅ Dynamic import path resolver restricted correctly (no walk-up over-reachability).");
+  } else {
+    console.error("❌ Dynamic import path resolver failed (walked up and marked unused-file.js as reachable).");
+    failed = true;
+  }
+
+  // Verify jsconfig paths mapping resolved utils/math.ts as reachable
+  const mathIsReachable = !robustnessUnusedList.includes('utils/math.ts');
+  if (mathIsReachable) {
+    console.log("✅ Successfully resolved custom tsconfig/jsconfig path aliases.");
+  } else {
+    console.error("❌ Failed to resolve custom tsconfig/jsconfig path aliases.");
+    failed = true;
+  }
+
+  // Verify TS type-only import was tracked correctly (UserInfo not flagged as unused import in index.ts)
+  const isTypeImportUnused = robustnessResults.unusedImports.some(imp => imp.name === 'UserInfo');
+  if (!isTypeImportUnused) {
+    console.log("✅ Successfully tracked TypeScript type annotations and interfaces.");
+  } else {
+    console.error("❌ Failed to track TypeScript type annotations (falsely flagged UserInfo type as unused).");
+    failed = true;
+  }
+
+  // Verify destructured exports: 'sub' and 'div' should be flagged as unused exports, but 'add' should not be.
+  const isAddUnused = robustnessResults.unusedExports.some(e => e.name === 'add');
+  const isSubUnused = robustnessResults.unusedExports.some(e => e.name === 'sub');
+  const isDivUnused = robustnessResults.unusedExports.some(e => e.name === 'div');
+  if (!isAddUnused && isSubUnused && isDivUnused) {
+    console.log("✅ Successfully parsed destructured (object and array) exports.");
+  } else {
+    console.error("❌ Failed to parse destructured exports. add unused: " + isAddUnused + ", sub unused: " + isSubUnused + ", div unused: " + isDivUnused);
+    failed = true;
+  }
+
   if (failed) {
     console.error("❌ Tests failed!");
     process.exit(1);

@@ -64,7 +64,7 @@ program
         verbose: options.verbose || fileConfig.verbose || false,
         git: options.git || fileConfig.git || false,
         ignore: options.ignore || fileConfig.ignore,
-        entryPoints: options.entry || (fileConfig.entryPoints ? fileConfig.entryPoints.map(e => path.resolve(targetDir, e)) : undefined),
+        entryPoints: (options.entry ? options.entry.map(e => path.resolve(targetDir, e)) : undefined) || (fileConfig.entryPoints ? fileConfig.entryPoints.map(e => path.resolve(targetDir, e)) : undefined),
       };
 
       if (!config.json) {

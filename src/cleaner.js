@@ -3,6 +3,7 @@ import path from 'path';
 import { parse } from '@babel/parser';
 import traverseModule from '@babel/traverse';
 import generateModule from '@babel/generator';
+import { extractPatternNames } from './parser.js';
 
 const traverse = traverseModule.default || traverseModule;
 const generate = generateModule.default || generateModule;
@@ -83,13 +84,16 @@ export function cleanProject(results, targetDir = '.') {
         ImportDeclaration(pathNode) {
           if (actions.unusedImports.length === 0) return;
 
+          const originalCount = pathNode.node.specifiers.length;
+          if (originalCount === 0) return; // side-effect import, keep it!
+
           // Filter out unused specifiers
           pathNode.node.specifiers = pathNode.node.specifiers.filter(spec => {
             const name = spec.local.name;
             return !actions.unusedImports.includes(name);
           });
 
-          // Remove the statement if it has no specifiers left
+          // Remove the statement only if it originally had specifiers and now has none
           if (pathNode.node.specifiers.length === 0) {
             pathNode.remove();
           }
@@ -101,7 +105,7 @@ export function cleanProject(results, targetDir = '.') {
             let names = [];
 
             if (decl.type === 'VariableDeclaration') {
-              names = decl.declarations.map(d => d.id.name).filter(Boolean);
+              names = decl.declarations.flatMap(d => extractPatternNames(d.id));
             } else if (decl.id && decl.id.name) {
               names = [decl.id.name];
             }

@@ -4,6 +4,32 @@ import traverseModule from '@babel/traverse';
 
 const traverse = traverseModule.default || traverseModule;
 
+export function extractPatternNames(node, names = []) {
+  if (!node) return names;
+  if (node.type === 'Identifier') {
+    names.push(node.name);
+  } else if (node.type === 'ObjectPattern') {
+    for (const prop of node.properties) {
+      if (prop.type === 'ObjectProperty') {
+        extractPatternNames(prop.value, names);
+      } else if (prop.type === 'RestElement') {
+        extractPatternNames(prop.argument, names);
+      }
+    }
+  } else if (node.type === 'ArrayPattern') {
+    for (const element of node.elements) {
+      if (element) {
+        extractPatternNames(element, names);
+      }
+    }
+  } else if (node.type === 'AssignmentPattern') {
+    extractPatternNames(node.left, names);
+  } else if (node.type === 'RestElement') {
+    extractPatternNames(node.argument, names);
+  }
+  return names;
+}
+
 /**
  * Parses a file and extracts dependencies, exports, and local declarations.
  * @param {string} filePath
@@ -104,16 +130,10 @@ export function parseFile(filePath) {
         const decl = pathNode.node.declaration;
         if (decl.type === 'VariableDeclaration') {
           for (const d of decl.declarations) {
-            if (d.id.type === 'Identifier') {
-              exports.push({ name: d.id.name, isDefault: false, line });
-              exportedNames.add(d.id.name);
-            } else if (d.id.type === 'ObjectPattern') {
-              for (const prop of d.id.properties) {
-                if (prop.type === 'ObjectProperty' && prop.value.type === 'Identifier') {
-                  exports.push({ name: prop.value.name, isDefault: false, line });
-                  exportedNames.add(prop.value.name);
-                }
-              }
+            const names = extractPatternNames(d.id);
+            for (const name of names) {
+              exports.push({ name, isDefault: false, line });
+              exportedNames.add(name);
             }
           }
         } else if (decl.id && decl.id.type === 'Identifier') {
@@ -251,6 +271,33 @@ export function parseFile(filePath) {
     TemplateLiteral(pathNode) {
       for (const element of pathNode.node.quasis) {
         stringLiterals.add(element.value.cooked || element.value.raw);
+      }
+    },
+    TSTypeReference(pathNode) {
+      let current = pathNode.node.typeName;
+      while (current && current.type === 'TSQualifiedName') {
+        current = current.left;
+      }
+      if (current && current.type === 'Identifier') {
+        referencedNames.add(current.name);
+      }
+    },
+    TSExpressionWithTypeArguments(pathNode) {
+      let current = pathNode.node.expression;
+      while (current && current.type === 'TSQualifiedName') {
+        current = current.left;
+      }
+      if (current && current.type === 'Identifier') {
+        referencedNames.add(current.name);
+      }
+    },
+    TSTypeQuery(pathNode) {
+      let current = pathNode.node.exprName;
+      while (current && current.type === 'TSQualifiedName') {
+        current = current.left;
+      }
+      if (current && current.type === 'Identifier') {
+        referencedNames.add(current.name);
       }
     }
   });
