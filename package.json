@@ -1,6 +1,6 @@
 {
   "name": "orphix",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Find unused files, exports, functions, components, and APIs in JS/TS projects",
   "main": "src/analyzer.js",
   "type": "module",
@@ -14,7 +14,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node tests/run.js"
+    "test": "node tests/run.js",
+    "postinstall": "node bin/postinstall.js"
   },
   "keywords": [
     "dead-code",
