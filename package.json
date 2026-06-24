@@ -27,12 +27,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/orphix.git"
+    "url": "git+https://github.com/sudhanshu0716/Orphix.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/orphix/issues"
+    "url": "https://github.com/sudhanshu0716/Orphix/issues"
   },
-  "homepage": "https://github.com/yourusername/orphix#readme",
+  "homepage": "https://github.com/sudhanshu0716/Orphix#readme",
   "dependencies": {
     "@babel/generator": "^7.29.7",
     "@babel/parser": "^7.29.7",
