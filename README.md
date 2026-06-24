@@ -12,6 +12,7 @@ Orphix uses static analysis and AST parsing via Babel to construct your project'
 - **Unused Export Detection**: Flags module exports that are never imported anywhere in the project.
 - **Unused Function & Component Detection**: Finds functions and React components declared but never invoked or rendered.
 - **Unused Imports Detection**: Identifies imported bindings that are never referenced in the declaring file.
+- **Unused npm Dependencies**: Flags third-party npm packages declared in `package.json` dependencies list that are never imported anywhere in the project.
 - **Monorepo & Client/Server Support**: Auto-groups workspaces containing separate sub-projects (e.g. `client` and `server` directories) and runs entrypoint auto-detection per-project root to prevent cross-deletions.
 - **Path Alias Resolution (`@/`)**: Automatically resolves `@/` imports relative to the nearest project root's `src` directory.
 - **CommonJS & ES Modules**: Full compatibility parsing for both standard ESM (`import`/`export`) and CommonJS (`require` / `module.exports`).
