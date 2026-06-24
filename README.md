@@ -12,6 +12,10 @@ Orphix uses static analysis and AST parsing via Babel to construct your project'
 - **Unused Export Detection**: Flags module exports that are never imported anywhere in the project.
 - **Unused Function & Component Detection**: Finds functions and React components declared but never invoked or rendered.
 - **Unused Imports Detection**: Identifies imported bindings that are never referenced in the declaring file.
+- **Monorepo & Client/Server Support**: Auto-groups workspaces containing separate sub-projects (e.g. `client` and `server` directories) and runs entrypoint auto-detection per-project root to prevent cross-deletions.
+- **Path Alias Resolution (`@/`)**: Automatically resolves `@/` imports relative to the nearest project root's `src` directory.
+- **CommonJS & ES Modules**: Full compatibility parsing for both standard ESM (`import`/`export`) and CommonJS (`require` / `module.exports`).
+- **Template-Literal Dynamic Imports**: Traces and resolves template-literal dynamic imports (e.g. `import(\`./pages/\${page}\`)`), automatically marking the target folders as reachable.
 - **Framework Awareness**: Out-of-the-box entrypoint auto-detection for **Next.js** (pages, layouts, API routes) and **Vite**.
 - **Barrel File / Re-export Propagation**: Follows re-exports (e.g. `export { x } from './module'`) to trace usage back to its origin file correctly.
 - **Dead API Route Tracing**: Extracts Next.js API endpoints and scans string/template literals across the project to flag unused endpoints.
@@ -19,6 +23,7 @@ Orphix uses static analysis and AST parsing via Babel to construct your project'
 - **Git History Integration**: Attaches the last modification date and author to unused items to help coordinate cleanups.
 - **CI/CD Integration**: Supports pipeline failures via the `--fail-on-dead-code` exit flag.
 - **Babel AST Support**: Out-of-the-box support for modern JavaScript, JSX, TypeScript, and TSX.
+- **Authoritative & Safe**: Safe path validations prevent deletion of files outside the scan workspace boundary, and Code formatting preservation minimises Git diff lines.
 
 ---
 
