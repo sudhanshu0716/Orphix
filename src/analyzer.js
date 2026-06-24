@@ -1,7 +1,8 @@
 import path from 'path';
+import fs from 'fs';
 import { scanFiles } from './scanner.js';
 import { parseFile } from './parser.js';
-import { buildDependencyGraph, resolveImport } from './graph.js';
+import { buildDependencyGraph, resolveImport, findProjectRoots } from './graph.js';
 import { getGitHistory } from './git.js';
 
 function getApiEndpoint(relativeFile) {
@@ -317,6 +318,55 @@ export async function analyzeProject(targetDir, options = {}) {
     }
   }
 
+  // 5. Identify unused npm packages
+  const projectRoots = findProjectRoots(files, targetDir);
+  const unusedPackages = [];
+
+  for (const root of projectRoots) {
+    const pkgPath = path.join(root, 'package.json');
+    if (!fs.existsSync(pkgPath)) continue;
+
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+      const declaredDeps = Object.keys(pkg.dependencies || {});
+      if (declaredDeps.length === 0) continue;
+
+      // Find all files belonging to this project root
+      const localFiles = files.filter(f => f.startsWith(root));
+      const usedDeps = new Set();
+
+      for (const file of localFiles) {
+        const fileData = parsedFiles[file];
+        if (!fileData) continue;
+
+        for (const imp of fileData.imports) {
+          const source = imp.source;
+          if (!source.startsWith('.') && !path.isAbsolute(source) && !source.startsWith('@/')) {
+            // Extract base package name
+            const parts = source.split('/');
+            const basePkg = source.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
+            usedDeps.add(basePkg);
+          }
+        }
+      }
+
+      // Check which declared dependencies are never used
+      for (const dep of declaredDeps) {
+        if (['path', 'fs', 'child_process', 'os', 'crypto', 'readline', 'events', 'util'].includes(dep)) continue;
+        
+        if (!usedDeps.has(dep)) {
+          unusedPackages.push({
+            package: dep,
+            projectRoot: root,
+            relativeRoot: path.relative(targetDir, root) || '.',
+          });
+        }
+      }
+    } catch (e) {
+      // Ignore JSON parse errors
+    }
+  }
+
   return {
     entryPoints: entryPoints.map(f => path.relative(targetDir, f)),
     unusedFiles,
@@ -324,6 +374,7 @@ export async function analyzeProject(targetDir, options = {}) {
     unusedFunctions,
     unusedImports,
     deadApis,
+    unusedPackages,
     parseErrors,
   };
 }

@@ -90,10 +90,12 @@ async function runTests() {
   const hasExpected = unusedFilesList.includes(expectedUnused);
   const hasUnexpected = unexpectedUnused.some(f => unusedFilesList.includes(f));
 
-  if (hasExpected && !hasUnexpected) {
-    console.log("✅ Correctly handled monorepo/client-server: only 'server/src/unused.js' is unused.");
+  const hasUnusedPkg = monorepoResults.unusedPackages.some(p => p.package === 'lodash' && p.relativeRoot.replace(/\\/g, '/') === 'server');
+
+  if (hasExpected && !hasUnexpected && hasUnusedPkg) {
+    console.log("✅ Correctly handled monorepo/client-server: only 'server/src/unused.js' is unused and 'lodash' is flagged as unused package dependency.");
   } else {
-    console.error("❌ Monorepo client-server auto-detection failed. Found unused files:", unusedFilesList);
+    console.error("❌ Monorepo client-server auto-detection failed. Found unused files:", unusedFilesList, "Found unused packages:", monorepoResults.unusedPackages);
     failed = true;
   }
 

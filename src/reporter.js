@@ -11,7 +11,7 @@ export function reportResults(results, options = {}) {
     return;
   }
 
-  const { entryPoints, unusedFiles, unusedExports, unusedFunctions, unusedImports = [], deadApis = [], parseErrors } = results;
+  const { entryPoints, unusedFiles, unusedExports, unusedFunctions, unusedImports = [], deadApis = [], unusedPackages = [], parseErrors } = results;
 
   console.log(`\n${pc.bold(pc.cyan('=== Orphix Analysis ==='))}\n`);
 
@@ -21,7 +21,7 @@ export function reportResults(results, options = {}) {
     console.log();
   }
 
-  const totalIssues = unusedFiles.length + unusedExports.length + unusedFunctions.length + unusedImports.length + deadApis.length;
+  const totalIssues = unusedFiles.length + unusedExports.length + unusedFunctions.length + unusedImports.length + deadApis.length + unusedPackages.length;
 
   if (unusedFiles.length > 0) {
     console.log(pc.bold(pc.red(`Unused Files (${unusedFiles.length})`)));
@@ -85,6 +85,16 @@ export function reportResults(results, options = {}) {
         gitStr = pc.dim(` (Last updated ${imp.gitInfo.relativeDate} by ${imp.gitInfo.author})`);
       }
       console.log(`  ${pc.bold(imp.relativeFile)} - Unused Import ${pc.bold(pc.cyan(imp.name))} from "${imp.source}"${gitStr}`);
+    });
+    console.log();
+  }
+
+  if (unusedPackages.length > 0) {
+    console.log(pc.bold(pc.red(`Unused npm Dependencies (${unusedPackages.length})`)));
+    console.log(pc.red('--------------------------------------------------'));
+    unusedPackages.forEach(pkg => {
+      const rootStr = pkg.relativeRoot !== '.' ? ` (in ${pkg.relativeRoot})` : '';
+      console.log(`  ${pc.bold(pc.red(pkg.package))}${rootStr}`);
     });
     console.log();
   }

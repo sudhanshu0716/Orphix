@@ -115,7 +115,7 @@ export function resolveImportDir(importerPath, source) {
  * Helper to find all distinct project roots containing a package.json file,
  * walking up from each file directory until we reach the target directory.
  */
-function findProjectRoots(allFiles, targetDir) {
+export function findProjectRoots(allFiles, targetDir) {
   const roots = new Set();
   const targetDirResolved = path.resolve(targetDir);
   roots.add(targetDirResolved);

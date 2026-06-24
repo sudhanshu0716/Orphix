@@ -1,4 +1,6 @@
 {
   "name": "server-app",
-  "dependencies": {}
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
 }
