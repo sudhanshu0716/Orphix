@@ -8,12 +8,16 @@ import { cleanProject } from '../src/cleaner.js';
 
 import fs from 'fs';
 
+const packageJson = JSON.parse(
+  fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
+);
+
 const program = new Command();
 
 program
   .name('orphix')
   .description('Find unused files, exports, functions, and components in your JS/TS codebase')
-  .version('1.0.0')
+  .version(packageJson.version)
   .argument('[dir]', 'directory to scan', '.')
   .option('--json', 'output result in JSON format', false)
   .option('--verbose', 'detailed logs', false)

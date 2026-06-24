@@ -1,6 +1,6 @@
 {
   "name": "orphix",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Find unused files, exports, functions, components, and APIs in JS/TS projects",
   "main": "src/analyzer.js",
   "type": "module",
@@ -15,7 +15,9 @@
   ],
   "scripts": {
     "test": "node tests/run.js",
-    "postinstall": "node bin/postinstall.js"
+    "postinstall": "node bin/postinstall.js",
+    "orphix": "orphix",
+    "orphix:clean": "orphix --clean"
   },
   "keywords": [
     "dead-code",
@@ -40,6 +42,7 @@
     "@babel/traverse": "^7.29.7",
     "commander": "^15.0.0",
     "fast-glob": "^3.3.3",
+    "orphix": "^1.0.1",
     "picocolors": "^1.1.1"
   }
 }
