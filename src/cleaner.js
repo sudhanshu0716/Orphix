@@ -10,10 +10,24 @@ const generate = generateModule.default || generateModule;
 /**
  * Automatically clean up unused code and files based on analysis results.
  * @param {object} results - Orphix analysis results
+ * @param {string} [targetDir] - scanning target directory for path containment check
  */
-export function cleanProject(results) {
+export function cleanProject(results, targetDir = '.') {
+  const resolvedTarget = path.resolve(targetDir);
+
+  // Helper to ensure files are strictly contained within target directory (prevents path traversal/symlink escape)
+  const isSafePath = (filePath) => {
+    const resolvedFile = path.resolve(filePath);
+    const relative = path.relative(resolvedTarget, resolvedFile);
+    return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+  };
+
   // 1. Delete unused files
   for (const f of results.unusedFiles) {
+    if (!isSafePath(f.file)) {
+      console.warn(`Warning: Security block. Prevented deletion of file outside target directory: ${f.file}`);
+      continue;
+    }
     if (fs.existsSync(f.file)) {
       fs.unlinkSync(f.file);
       console.log(`Deleted unused file: ${f.relativeFile}`);
@@ -42,6 +56,10 @@ export function cleanProject(results) {
 
   // Apply AST modifications
   for (const [file, actions] of Object.entries(cleanups)) {
+    if (!isSafePath(file)) {
+      console.warn(`Warning: Security block. Prevented rewriting of file outside target directory: ${file}`);
+      continue;
+    }
     if (!fs.existsSync(file)) continue;
 
     try {
@@ -143,7 +161,7 @@ export function cleanProject(results) {
         }
       });
 
-      const output = generate(ast, {}, code);
+      const output = generate(ast, { retainLines: true }, code);
       fs.writeFileSync(file, output.code, 'utf-8');
       console.log(`Cleaned up unused code in: ${path.relative(process.cwd(), file)}`);
     } catch (err) {

@@ -1,6 +1,6 @@
 {
   "name": "orphix",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Find unused files, exports, functions, components, and APIs in JS/TS projects",
   "main": "src/analyzer.js",
   "type": "module",

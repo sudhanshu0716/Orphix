@@ -53,7 +53,7 @@ program
       reportResults(results, { json: config.json });
 
       if (options.clean) {
-        cleanProject(results);
+        cleanProject(results, targetDir);
       }
 
       const failOnDeadCode = options.failOnDeadCode || fileConfig.failOnDeadCode || false;
