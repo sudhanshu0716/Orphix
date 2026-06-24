@@ -1,34 +1,53 @@
 # Orphix 🕵️‍♂️
 
+<div align="left">
+  <!-- Contact Badges -->
+  <a href="mailto:sudh0716@gmail.com"><img src="https://img.shields.io/badge/Email-SUDH0716%40GMAIL.COM-red?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"/></a>
+  <a href="https://www.linkedin.com/in/sudh0716"><img src="https://img.shields.io/badge/LinkedIn-SUDH0716-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn"/></a>
+  <a href="https://leetcode.com/sudhanshu0716"><img src="https://img.shields.io/badge/LeetCode-SUDHANSHU0716-orange?style=for-the-badge&logo=leetcode&logoColor=white" alt="LeetCode"/></a>
+</div>
+
+<br/>
+
+<div align="left">
+  <!-- Library Status Badges -->
+  <a href="https://www.npmjs.com/package/orphix"><img src="https://img.shields.io/npm/v/orphix.svg?style=flat-square&color=007acc" alt="npm version"/></a>
+  <a href="https://www.npmjs.com/package/orphix"><img src="https://img.shields.io/npm/dm/orphix.svg?style=flat-square&color=4c1" alt="npm downloads"/></a>
+  <a href="https://github.com/sudhanshu0716/Orphix"><img src="https://img.shields.io/github/stars/sudhanshu0716/Orphix.svg?style=flat-square&color=yellow" alt="GitHub stars"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/npm/l/orphix.svg?style=flat-square&color=ff69b4" alt="License"/></a>
+</div>
+
+---
+
 Find unused files, exports, functions, components, APIs, and imports before they become technical debt.
 
-Orphix uses static analysis and AST parsing via Babel to construct your project's dependency graph, identify orphaned files, discover unused module exports, locate dead local functions/React components, map dead API routes, and clean up the code automatically.
+Orphix uses static analysis and AST parsing via Babel to construct your project's dependency graph, identify orphaned files, discover unused module exports, locate dead local functions/React components, map dead API routes, identify unused npm package dependencies, and clean up the code automatically.
 
 ---
 
-## Features
+## 🚀 Features
 
-- **Unused File Detection**: Identifies files that are completely unreachable from your entry points.
-- **Unused Export Detection**: Flags module exports that are never imported anywhere in the project.
-- **Unused Function & Component Detection**: Finds functions and React components declared but never invoked or rendered.
-- **Unused Imports Detection**: Identifies imported bindings that are never referenced in the declaring file.
-- **Unused npm Dependencies**: Flags third-party npm packages declared in `package.json` dependencies list that are never imported anywhere in the project.
-- **Monorepo & Client/Server Support**: Auto-groups workspaces containing separate sub-projects (e.g. `client` and `server` directories) and runs entrypoint auto-detection per-project root to prevent cross-deletions.
-- **Path Alias Resolution (`@/`)**: Automatically resolves `@/` imports relative to the nearest project root's `src` directory.
-- **CommonJS & ES Modules**: Full compatibility parsing for both standard ESM (`import`/`export`) and CommonJS (`require` / `module.exports`).
-- **Template-Literal Dynamic Imports**: Traces and resolves template-literal dynamic imports (e.g. `import(\`./pages/\${page}\`)`), automatically marking the target folders as reachable.
-- **Framework Awareness**: Out-of-the-box entrypoint auto-detection for **Next.js** (pages, layouts, API routes) and **Vite**.
-- **Barrel File / Re-export Propagation**: Follows re-exports (e.g. `export { x } from './module'`) to trace usage back to its origin file correctly.
-- **Dead API Route Tracing**: Extracts Next.js API endpoints and scans string/template literals across the project to flag unused endpoints.
-- **Automatic Code Cleanup (`--clean`)**: Rewrites files using Babel-traverse codemods to delete orphaned files, strip unused imports, and demote/remove unused exports.
-- **Git History Integration**: Attaches the last modification date and author to unused items to help coordinate cleanups.
-- **CI/CD Integration**: Supports pipeline failures via the `--fail-on-dead-code` exit flag.
-- **Babel AST Support**: Out-of-the-box support for modern JavaScript, JSX, TypeScript, and TSX.
-- **Authoritative & Safe**: Safe path validations prevent deletion of files outside the scan workspace boundary, and Code formatting preservation minimises Git diff lines.
+- **📂 Unused File Detection**: Identifies files that are completely unreachable from your entry points.
+- **📤 Unused Export Detection**: Flags module exports that are never imported anywhere in the project.
+- **⚡ Unused Function & Component Detection**: Finds functions and React components declared but never invoked or rendered.
+- **📥 Unused Imports Detection**: Identifies imported bindings that are never referenced in the declaring file.
+- **📦 Unused npm Dependencies**: Flags third-party npm packages declared in `package.json` dependencies list that are never imported anywhere in the project.
+- **💼 Monorepo & Client/Server Support**: Auto-groups workspaces containing separate sub-projects (e.g. `client` and `server` directories) and runs entrypoint auto-detection per-project root to prevent cross-deletions.
+- **🔍 Path Alias Resolution (`@/`)**: Automatically resolves `@/` imports relative to the nearest project root's `src` directory.
+- **⚙️ CommonJS & ES Modules**: Full compatibility parsing for both standard ESM (`import`/`export`) and CommonJS (`require` / `module.exports`).
+- **🔗 Template-Literal Dynamic Imports**: Traces and resolves template-literal dynamic imports (e.g. `import(\`./pages/\${page}\`)`), automatically marking the target folders as reachable.
+- **🧠 Framework Awareness**: Out-of-the-box entrypoint auto-detection for **Next.js** (pages, layouts, API routes) and **Vite**.
+- **🛢️ Barrel File / Re-export Propagation**: Follows re-exports (e.g. `export { x } from './module'`) to trace usage back to its origin file correctly.
+- **📡 Dead API Route Tracing**: Extracts Next.js API endpoints and scans string/template literals across the project to flag unused endpoints.
+- **🧹 Automatic Code Cleanup (`--clean`)**: Rewrites files using Babel-traverse codemods to delete orphaned files, strip unused imports, and demote/remove unused exports.
+- **🕒 Git History Integration**: Attaches the last modification date and author to unused items to help coordinate cleanups.
+- **🧪 CI/CD Integration**: Supports pipeline failures via the `--fail-on-dead-code` exit flag.
+- **📦 Babel AST Support**: Out-of-the-box support for modern JavaScript, JSX, TypeScript, and TSX.
+- **🛡️ Authoritative & Safe**: Safe path validations prevent deletion of files outside the scan workspace boundary, and Code formatting preservation minimises Git diff lines.
 
 ---
 
-## Installation
+## 📦 Installation
 
 Run Orphix directly without installation using `npx`:
 
@@ -50,7 +69,7 @@ npm install --save-dev orphix
 
 ---
 
-## CLI Options
+## 🛠️ CLI Options
 
 Running `npx orphix --help` outputs:
 
@@ -76,7 +95,7 @@ Options:
 
 ---
 
-## Configuration (`orphix.config.json`)
+## ⚙️ Configuration (`orphix.config.json`)
 
 You can define a configuration file named `orphix.config.json` in the root of your target directory. It merges seamlessly with command-line options.
 
@@ -93,7 +112,7 @@ You can define a configuration file named `orphix.config.json` in the root of yo
 
 ---
 
-## Examples
+## 📁 Examples
 
 ### Basic Scan
 Scan the current directory (auto-detecting entry points):
@@ -145,7 +164,7 @@ npx orphix --clean
 
 ---
 
-## How It Works
+## ⚙️ How It Works
 
 1. **Scanner**: Scans the targeted folder using `fast-glob`. It respects default rules (ignores `node_modules`, `.git`, `dist`, etc.) and automatically parses `.gitignore` file patterns if present.
 2. **Parser**: Translates source code into Abstract Syntax Trees (AST) using `@babel/parser` supporting TypeScript and JSX.
@@ -156,7 +175,8 @@ npx orphix --clean
 
 ---
 
-## License
+## 📄 License
 
 MIT
+
 
