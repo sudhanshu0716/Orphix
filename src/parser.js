@@ -30,11 +30,7 @@ export function extractPatternNames(node, names = []) {
   return names;
 }
 
-/**
- * Parses a file and extracts dependencies, exports, and local declarations.
- * @param {string} filePath
- * @returns {object} AST extraction details
- */
+// Parses a file using Babel to extract imports, exports, functions, and name references.
 export function parseFile(filePath) {
   const code = fs.readFileSync(filePath, 'utf-8');
   let ast;

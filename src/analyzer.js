@@ -82,12 +82,7 @@ function getApiEndpoint(relativeFile) {
   return null;
 }
 
-/**
- * Perform analysis on a target directory.
- * @param {string} targetDir
- * @param {object} options
- * @returns {Promise<object>} report results
- */
+// Scans, parses, builds graphs, and runs reachability checks on a project directory.
 export async function analyzeProject(targetDir, options = {}) {
   const files = await scanFiles(targetDir, options);
   

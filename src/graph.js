@@ -92,12 +92,7 @@ export function resolveAlias(importerPath, source) {
   return null;
 }
 
-/**
- * Resolves an import source path relative to the importing file.
- * @param {string} importerPath - absolute path of the importing file
- * @param {string} source - raw import string
- * @returns {string|null} resolved absolute file path or null if external/unresolved
- */
+// Resolves import path relative to the importing file (handling aliases & index files)
 export function resolveImport(importerPath, source) {
   let targetPath = resolveAlias(importerPath, source);
 
@@ -159,12 +154,7 @@ export function resolveImport(importerPath, source) {
   return null;
 }
 
-/**
- * Resolves a dynamic import directory source path relative to the importing file.
- * @param {string} importerPath - absolute path of the importing file
- * @param {string} source - raw import string directory prefix
- * @returns {string|null} resolved absolute directory path or null
- */
+// Resolves a dynamic import directory source path relative to the importing file
 export function resolveImportDir(importerPath, source) {
   let targetPath = resolveAlias(importerPath, source);
 
@@ -209,10 +199,7 @@ export function resolveImportDir(importerPath, source) {
   return null;
 }
 
-/**
- * Helper to find all distinct project roots containing a package.json file,
- * walking up from each file directory until we reach the target directory.
- */
+// Find distinct project roots containing a package.json, walking up from file dirs.
 export function findProjectRoots(allFiles, targetDir) {
   const roots = new Set();
   const targetDirResolved = path.resolve(targetDir);
@@ -234,9 +221,7 @@ export function findProjectRoots(allFiles, targetDir) {
   return Array.from(roots).sort((a, b) => b.length - a.length);
 }
 
-/**
- * Helper to check if a directory is a Next.js project.
- */
+// Check if a directory is a Next.js project.
 function isNextJSProject(dir) {
   if (
     fs.existsSync(path.join(dir, 'next.config.js')) ||
@@ -260,14 +245,7 @@ function isNextJSProject(dir) {
   return false;
 }
 
-/**
- * Builds the dependency graph and returns reachability info.
- * @param {string[]} allFiles - list of all project files
- * @param {object} parsedFiles - map of file paths to their parsed imports/exports
- * @param {string[]} [explicitEntryPoints] - list of entry point files
- * @param {string} [targetDir] - scanning target directory
- * @returns {object} { graph, reachable, entryPoints }
- */
+// Build the dependency graph and return reachability info.
 export function buildDependencyGraph(allFiles, parsedFiles, explicitEntryPoints = [], targetDir = '.') {
   const graph = {}; // parent -> child[]
   const incomingImports = {}; // child -> parent[]

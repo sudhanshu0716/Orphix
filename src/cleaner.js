@@ -8,11 +8,7 @@ import { extractPatternNames } from './parser.js';
 const traverse = traverseModule.default || traverseModule;
 const generate = generateModule.default || generateModule;
 
-/**
- * Automatically clean up unused code and files based on analysis results.
- * @param {object} results - Orphix analysis results
- * @param {string} [targetDir] - scanning target directory for path containment check
- */
+// Remove unused files and rewrite files to strip unused exports/imports/functions.
 export function cleanProject(results, targetDir = '.') {
   const resolvedTarget = path.resolve(targetDir);
 

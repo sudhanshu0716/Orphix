@@ -2,11 +2,7 @@ import glob from 'fast-glob';
 import path from 'path';
 import fs from 'fs';
 
-/**
- * Loads rules from .gitignore file if it exists.
- * @param {string} targetDir 
- * @returns {string[]} ignore patterns
- */
+// Read gitignore file if it exists and parse into patterns
 function loadGitignore(targetDir) {
   const gitignorePath = path.join(targetDir, '.gitignore');
   if (!fs.existsSync(gitignorePath)) {
@@ -37,12 +33,7 @@ function loadGitignore(targetDir) {
   }
 }
 
-/**
- * Scan for JavaScript and TypeScript files.
- * @param {string} targetDir
- * @param {object} options
- * @returns {Promise<string[]>} absolute file paths
- */
+// Scans target directory for js and ts files
 export async function scanFiles(targetDir, options = {}) {
   const absoluteTargetDir = path.resolve(targetDir);
   if (!fs.existsSync(absoluteTargetDir)) {

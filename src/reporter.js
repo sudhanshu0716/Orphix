@@ -1,10 +1,6 @@
 import pc from 'picocolors';
 
-/**
- * Reports analysis results to console.
- * @param {object} results - analyzer output
- * @param {object} options - reporting configurations
- */
+// Prints analysis results (JSON or pretty-printed text) to stdout.
 export function reportResults(results, options = {}) {
   if (options.json) {
     console.log(JSON.stringify(results, null, 2));

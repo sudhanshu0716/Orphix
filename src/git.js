@@ -1,12 +1,7 @@
 import { execFileSync } from 'child_process';
 import path from 'path';
 
-/**
- * Returns Git information for a given file (last modification relative date, author).
- * Falls back to null if Git commands fail.
- * @param {string} filePath - absolute file path
- * @returns {object|null} { relativeDate, author } or null
- */
+// Get last commit date and author name for a file. Returns null on error/untracked.
 export function getGitHistory(filePath) {
   try {
     const dir = path.dirname(filePath);
