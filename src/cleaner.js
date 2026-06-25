@@ -33,6 +33,14 @@ export function cleanProject(results, targetDir = '.') {
       fs.unlinkSync(f.file);
       console.log(`Deleted unused file: ${f.relativeFile}`);
     }
+    if (f.companionFiles) {
+      for (const comp of f.companionFiles) {
+        if (isSafePath(comp.file) && fs.existsSync(comp.file)) {
+          fs.unlinkSync(comp.file);
+          console.log(`Deleted companion style file: ${comp.relativeFile}`);
+        }
+      }
+    }
   }
 
   // 2. Group code modifications by file to parse each file only once

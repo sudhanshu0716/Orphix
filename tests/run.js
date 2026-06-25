@@ -135,6 +135,16 @@ async function runTests() {
     failed = true;
   }
 
+  // Verify companion stylesheet detection
+  const unusedFileData = robustnessResults.unusedFiles.find(f => f.relativeFile.replace(/\\/g, '/') === 'unused-file.js');
+  const hasCompanionStyle = unusedFileData && unusedFileData.companionFiles && unusedFileData.companionFiles.some(c => c.relativeFile.replace(/\\/g, '/') === 'unused-file.css');
+  if (hasCompanionStyle) {
+    console.log("✅ Successfully identified companion stylesheet for unused JS/TS file.");
+  } else {
+    console.error("❌ Failed to identify companion stylesheet for unused JS/TS file.");
+    failed = true;
+  }
+
   // Verify jsconfig paths mapping resolved utils/math.ts as reachable
   const mathIsReachable = !robustnessUnusedList.includes('utils/math.ts');
   if (mathIsReachable) {

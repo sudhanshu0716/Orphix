@@ -114,6 +114,25 @@ export async function analyzeProject(targetDir, options = {}) {
     targetDir
   );
 
+  // Collect all resolved style imports from reachable files
+  const reachableStyleImports = new Set();
+  for (const file of files) {
+    if (reachable.has(file)) {
+      const fileData = parsedFiles[file];
+      if (fileData) {
+        for (const imp of fileData.imports) {
+          const resolved = resolveImport(file, imp.source);
+          if (resolved) {
+            const ext = path.extname(resolved).toLowerCase();
+            if (['.css', '.scss', '.sass', '.less'].includes(ext)) {
+              reachableStyleImports.add(resolved);
+            }
+          }
+        }
+      }
+    }
+  }
+
   const unusedFiles = [];
   const unusedExports = [];
   const unusedFunctions = [];
@@ -137,11 +156,30 @@ export async function analyzeProject(targetDir, options = {}) {
         confidence = Math.min(99, confidence + 5);
       }
 
+      // Find adjacent companion styling files
+      const companionExtensions = ['.css', '.scss', '.sass', '.less', '.module.css', '.module.scss', '.module.sass', '.module.less'];
+      const ext = path.extname(file);
+      const baseWithoutExt = file.slice(0, -ext.length);
+      const companionFiles = [];
+
+      for (const compExt of companionExtensions) {
+        const companionPath = baseWithoutExt + compExt;
+        if (fs.existsSync(companionPath) && fs.statSync(companionPath).isFile()) {
+          if (!reachableStyleImports.has(companionPath)) {
+            companionFiles.push({
+              file: companionPath,
+              relativeFile: path.relative(targetDir, companionPath),
+            });
+          }
+        }
+      }
+
       unusedFiles.push({
         file,
         relativeFile: path.relative(targetDir, file),
         gitInfo,
         confidence,
+        companionFiles,
       });
     }
   }
